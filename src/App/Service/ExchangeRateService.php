@@ -12,7 +12,6 @@ use Symfony\Contracts\Cache\ItemInterface;
 class ExchangeRateService
 {
     private string $cacheKey;
-    private int $cacheTtl;
 
     public function __construct(
         private NbpApiConnectorInterface $connector,
@@ -21,7 +20,6 @@ class ExchangeRateService
         ParameterBagInterface $parameterBag
     ) {
         $this->cacheKey = $parameterBag->get('exchange_rate.cache.key');
-        $this->cacheTtl = $parameterBag->get('exchange_rate.cache.ttl');
     }
 
     /**
@@ -29,9 +27,18 @@ class ExchangeRateService
      */
     public function getTodayRates(): array
     {
-        return $this->cache->get($this->cacheKey, function (ItemInterface $item) {
-            $item->expiresAfter($this->cacheTtl);
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('Europe/Warsaw'));
+        $hour = (int) $now->format('H');
 
+        // dostosowanie klucza, aby pracownik mial aktualne kursy
+        $dateKey = $hour < 12
+            ? $now->modify('-1 day')->format('Y-m-d')
+            : $now->format('Y-m-d');
+
+        $cacheKey = $this->cacheKey . $dateKey;
+
+        return $this->cache->get($cacheKey, function (ItemInterface $item) use ($now) {
+            $item->expiresAfter($this->calculateTtlUntilNextUpdate($now));
             return $this->fetchAndProcessRates();
         });
     }
@@ -42,5 +49,14 @@ class ExchangeRateService
         
         return $this->rateParser->parseTodayRates($data);
     }
+
+    private function calculateTtlUntilNextUpdate(\DateTimeImmutable $now): int
+    {
+        $todayNoon = $now->setTime(12, 0);
+        $nextNoon = $now < $todayNoon ? $todayNoon : $todayNoon->modify('+1 day');
+
+        return $nextNoon->getTimestamp() - $now->getTimestamp();
+    }
+
 
 }

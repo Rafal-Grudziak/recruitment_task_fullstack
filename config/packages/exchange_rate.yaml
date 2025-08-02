@@ -13,5 +13,4 @@ parameters:
   exchange_rate.other_sell_spread: 0.2
   
   # Cache configuration
-  exchange_rate.cache.ttl: 3600  # 1 hour in seconds
-  exchange_rate.cache.key: 'exchange_rates_today' 
+  exchange_rate.cache.key: 'exchange_rates_toda_' 

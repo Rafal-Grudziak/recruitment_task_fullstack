@@ -27,7 +27,7 @@ class ExchangeRateServiceTest extends TestCase
         $this->parameterBag = $this->createMock(ParameterBagInterface::class);
 
         $this->parameterBag->method('get')->willReturnMap([
-            ['exchange_rate.cache.key', 'test_cache_key'],
+            ['exchange_rate.cache.key', 'exchange_rates_toda_'],
             ['exchange_rate.cache.ttl', 3600],
         ]);
 
@@ -45,9 +45,11 @@ class ExchangeRateServiceTest extends TestCase
             new ExchangeRateDto('USD', 'dollar', 4.25),
         ];
 
+        $expectedKey = $this->generateExpectedCacheKey();
+
         $this->cache->expects($this->once())
             ->method('get')
-            ->with('test_cache_key')
+            ->with($expectedKey)
             ->willReturn($expectedData);
 
         $result = $this->exchangeRateService->getTodayRates();
@@ -60,12 +62,14 @@ class ExchangeRateServiceTest extends TestCase
     {
         $parameterBag = $this->createMock(ParameterBagInterface::class);
         $parameterBag->method('get')->willReturnMap([
-            ['exchange_rate.cache.key', 'custom_key'],
+            ['exchange_rate.cache.key', 'exchange_rates_toda_'],
             ['exchange_rate.cache.ttl', 7200],
         ]);
 
+        $expectedKey = $this->generateExpectedCacheKey('exchange_rates_toda_');
+
         $cache = $this->createMock(CacheInterface::class);
-        $cache->method('get')->with('custom_key')->willReturn([]);
+        $cache->method('get')->with($expectedKey)->willReturn([]);
 
         $service = new ExchangeRateService(
             $this->connector,
@@ -80,43 +84,8 @@ class ExchangeRateServiceTest extends TestCase
 
     public function testCacheCallbackExecution(): void
     {
-        // Dummy implementacja ItemInterface
-        $dummyItem = new class implements ItemInterface {
-            public function expiresAfter($time): bool|self
-            {
-                // Możesz dodać jakieś sprawdzenie/logikę jeśli chcesz
-                return $this;
-            }
-    
-            public function getKey() {}
-            public function isHit() {}
-            public function get() {}
-            public function set($value): static { return $this; }
-            public function expiresAt($expiration): static { return $this; }
-            public function tag($tags): static { return $this; }
-            public function getMetadata(): array { return []; }
-        };
-    
-        $this->connector->method('getTodayRates')->willReturn(['data']);
-        $this->rateParser->method('parseTodayRates')->willReturn([
-            new ExchangeRateDto('USD', 'dollar', 4.25),
-        ]);
-    
-        $this->cache->method('get')->willReturnCallback(
-            function ($key, $callback) use ($dummyItem) {
-                return $callback($dummyItem);
-            }
-        );
-    
-        $result = $this->exchangeRateService->getTodayRates();
-    
-        $this->assertIsArray($result);
-        $this->assertCount(1, $result);
-        $this->assertInstanceOf(ExchangeRateDto::class, $result[0]);
-    }
-    
-    public function testEmptyDataHandling(): void
-    {
+        $expectedKey = $this->generateExpectedCacheKey();
+
         $dummyItem = new class implements ItemInterface {
             public function expiresAfter($time): bool|self { return $this; }
             public function getKey() {}
@@ -127,18 +96,60 @@ class ExchangeRateServiceTest extends TestCase
             public function tag($tags): static { return $this; }
             public function getMetadata(): array { return []; }
         };
-    
+
+        $this->connector->method('getTodayRates')->willReturn(['data']);
+        $this->rateParser->method('parseTodayRates')->willReturn([
+            new ExchangeRateDto('USD', 'dollar', 4.25),
+        ]);
+
+        $this->cache->method('get')->with($expectedKey)->willReturnCallback(
+            fn ($key, $callback) => $callback($dummyItem)
+        );
+
+        $result = $this->exchangeRateService->getTodayRates();
+
+        $this->assertIsArray($result);
+        $this->assertCount(1, $result);
+        $this->assertInstanceOf(ExchangeRateDto::class, $result[0]);
+    }
+
+    public function testEmptyDataHandling(): void
+    {
+        $expectedKey = $this->generateExpectedCacheKey();
+
+        $dummyItem = new class implements ItemInterface {
+            public function expiresAfter($time): bool|self { return $this; }
+            public function getKey() {}
+            public function isHit() {}
+            public function get() {}
+            public function set($value): static { return $this; }
+            public function expiresAt($expiration): static { return $this; }
+            public function tag($tags): static { return $this; }
+            public function getMetadata(): array { return []; }
+        };
+
         $this->connector->method('getTodayRates')->willReturn([]);
         $this->rateParser->method('parseTodayRates')->willReturn([]);
-    
-        $this->cache->method('get')->willReturnCallback(
-            function ($key, $callback) use ($dummyItem) {
-                return $callback($dummyItem);
-            }
+
+        $this->cache->method('get')->with($expectedKey)->willReturnCallback(
+            fn ($key, $callback) => $callback($dummyItem)
         );
-    
+
         $result = $this->exchangeRateService->getTodayRates();
+
         $this->assertIsArray($result);
         $this->assertEmpty($result);
+    }
+
+    private function generateExpectedCacheKey(string $prefix = 'exchange_rates_toda_'): string
+    {
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('Europe/Warsaw'));
+        $hour = (int) $now->format('H');
+
+        $dateKey = $hour < 12
+            ? $now->modify('-1 day')->format('Y-m-d')
+            : $now->format('Y-m-d');
+
+        return $prefix . $dateKey;
     }
 }
