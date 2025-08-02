@@ -1,11 +1,8 @@
-FROM php:7.2-apache
+FROM php:8.2-apache
 
 WORKDIR /var/www/html
 
-RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list && \
-    sed -i 's|security.debian.org|archive.debian.org|g' /etc/apt/sources.list && \
-    apt-get update -o Acquire::Check-Valid-Until=false -y && apt-get upgrade -y
-
+RUN apt-get update -y && apt-get upgrade -y
 RUN apt-get install -y git curl zip libzip-dev
 
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
