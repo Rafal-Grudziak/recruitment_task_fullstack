@@ -30,7 +30,7 @@ class ExchangeRateService
         $now = new \DateTimeImmutable('now', new \DateTimeZone('Europe/Warsaw'));
         $hour = (int) $now->format('H');
 
-        // dostosowanie klucza, aby pracownik mial aktualne kursy
+        // Adjusting the cache key so that the employee has up-to-date rates
         $dateKey = $hour < 12
             ? $now->modify('-1 day')->format('Y-m-d')
             : $now->format('Y-m-d');

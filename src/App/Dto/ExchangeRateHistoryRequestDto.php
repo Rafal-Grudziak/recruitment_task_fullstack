@@ -39,7 +39,7 @@ class ExchangeRateHistoryRequestDto
             $hasDateParam = true;
             $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam);
     
-            // Sprawdzenie poprawności formatu i wartości
+            // Checking the correctness of the format and values
             if ($parsed && $parsed->format('Y-m-d') === $dateParam) {
                 $date = $parsed;
             }
