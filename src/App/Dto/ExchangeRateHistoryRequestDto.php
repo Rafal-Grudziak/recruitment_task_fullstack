@@ -31,23 +31,23 @@ class ExchangeRateHistoryRequestDto
         $code = $request->query->get('code', '');
         $dateParam = $request->query->get('date');
         $allowedCodes = $parameterBag->get('exchange_rate.allowed_currencies');
-        
+    
         $date = null;
         $hasDateParam = false;
-        
+    
         if ($dateParam) {
             $hasDateParam = true;
-            try {
-                $date = new \DateTimeImmutable($dateParam);
-            } catch (\Exception $e) {
-                // Pozwalamy na null — weryfikacja poprawności daty będzie w validate()
-                $date = null;
+            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam);
+    
+            // Sprawdzenie poprawności formatu i wartości
+            if ($parsed && $parsed->format('Y-m-d') === $dateParam) {
+                $date = $parsed;
             }
         }
-
+    
         $dto = new self($code, $date, $allowedCodes);
         $dto->hasDateParam = $hasDateParam;
-        
+    
         return $dto;
     }
 
@@ -62,23 +62,22 @@ class ExchangeRateHistoryRequestDto
     {
         $code = $data['code'] ?? '';
         $dateParam = $data['date'] ?? null;
-        
+
         $date = null;
         $hasDateParam = false;
-        
+
         if ($dateParam) {
             $hasDateParam = true;
-            try {
-                $date = new \DateTimeImmutable($dateParam);
-            } catch (\Exception $e) {
-                // Pozwalamy na null — weryfikacja poprawności daty będzie w validate()
-                $date = null;
+            $parsed = \DateTimeImmutable::createFromFormat('Y-m-d', $dateParam);
+
+            if ($parsed && $parsed->format('Y-m-d') === $dateParam) {
+                $date = $parsed;
             }
         }
 
         $dto = new self($code, $date, $allowedCodes);
         $dto->hasDateParam = $hasDateParam;
-        
+
         return $dto;
     }
 

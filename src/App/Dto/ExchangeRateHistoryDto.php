@@ -8,4 +8,12 @@ class ExchangeRateHistoryDto
         public string $date,
         public float $mid
     ) {}
+
+    public function toArray(): array
+    {
+        return [
+            'date' => $this->date,
+            'mid' => $this->mid,
+        ];
+    }
 } 

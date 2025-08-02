@@ -32,11 +32,8 @@ class ExchangeRateService
         return $this->cache->get($this->cacheKey, function (ItemInterface $item) {
             $item->expiresAfter($this->cacheTtl);
 
-            $dtos = $this->fetchAndProcessRates();
-            return array_map(fn(ExchangeRateDto $dto) => $dto->toArray(), $dtos);
+            return $this->fetchAndProcessRates();
         });
-
-        return $this->convertArraysToDtos($cachedData);
     }
 
     private function fetchAndProcessRates(): array
@@ -46,24 +43,4 @@ class ExchangeRateService
         return $this->rateParser->parseTodayRates($data);
     }
 
-    /**
-     * Convert cached arrays back to DTOs
-     *
-     * @param array $cachedData
-     * @return ExchangeRateDto[]
-     */
-    private function convertArraysToDtos(array $cachedData): array
-    {
-        $dtos = [];
-        foreach ($cachedData as $item) {
-            $dtos[] = new ExchangeRateDto(
-                $item['code'],
-                $item['currency'],
-                $item['mid'],
-                $item['buy'] ?? null,
-                $item['sell'] ?? null
-            );
-        }
-        return $dtos;
-    }
 }

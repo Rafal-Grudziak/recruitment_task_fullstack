@@ -4,8 +4,8 @@ namespace App\Resource;
 
 abstract class AbstractResource
 {
-    /** @var object DTO */
-    protected object $item;
+    /** @var array|object */
+    protected array|object $item;
 
     public function __construct($item)
     {
@@ -21,15 +21,14 @@ abstract class AbstractResource
 
     /**
      * Transform a collection of items
-     *
-     * @param array $items
-     * @return array
+     * 
+     * @param object[] $items
+     * @return array<int, array<string, mixed>>
      */
     public static function collection(array $items): array
     {
-        return array_map(function ($item) {
-            return (new static($item))->toArray();
-        }, $items);
+        return array_map(fn($item) => (new static($item))->toArray(), $items);
     }
+
     
 } 
