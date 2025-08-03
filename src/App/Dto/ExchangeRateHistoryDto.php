@@ -2,7 +2,7 @@
 
 namespace App\Dto;
 
-class ExchangeRateHistoryDto
+readonly class ExchangeRateHistoryDto
 {
     public function __construct(
         public string $date,

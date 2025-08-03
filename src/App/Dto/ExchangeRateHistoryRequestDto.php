@@ -94,8 +94,10 @@ class ExchangeRateHistoryRequestDto
             $errors[] = $this->getCodeErrorMessage();
         }
 
-        if (!$this->isValidDate()) {
+        if (!$this->date instanceof \DateTimeImmutable && $this->hasDateParam) {
             $errors[] = 'Nieprawidłowy format daty. Oczekiwany format: RRRR-MM-DD.';
+        } elseif ($this->date && $this->date > new \DateTimeImmutable('now', new \DateTimeZone('Europe/Warsaw'))) {
+            $errors[] = 'Data nie może być z przyszłości.';
         }
 
         return $errors;
@@ -119,10 +121,16 @@ class ExchangeRateHistoryRequestDto
     public function isValidDate(): bool
     {
         if (!$this->hasDateParam) {
-            return true; // Date is optional
+            return true;
         }
-        
-        return $this->date instanceof \DateTimeImmutable;
+
+        if (!$this->date instanceof \DateTimeImmutable) {
+            return false;
+        }
+
+        // Sprawdzenie, czy data nie jest z przyszłości
+        $now = new \DateTimeImmutable('now', new \DateTimeZone('Europe/Warsaw'));
+        return $this->date <= $now;
     }
 
     /**

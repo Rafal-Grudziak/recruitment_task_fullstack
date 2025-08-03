@@ -8,7 +8,11 @@ export async function getTodayRates() {
 
 export async function getHistory(code, date /* YYYY-MM-DD */) {
   const q = new URLSearchParams({ code, ...(date ? { date } : {}) }).toString();
-  const res = await fetch(`${BASE}/api/rates/history?${q}`, { headers: { 'Accept': 'application/json' }});
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const res = await fetch(`${BASE}/api/rates/history?${q}`, {
+    headers: { 'Accept': 'application/json' },
+  });
+
+  if (!res.ok) throw res;
+
   return res.json();
-} 
+}

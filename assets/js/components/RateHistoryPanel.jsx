@@ -14,7 +14,24 @@ export default function RateHistoryPanel({ code, date, onDateChange, onClose }) 
         const data = await getHistory(code, date);
         setHistory(data);
       } catch (e) {
-        setErr(String(e));
+        console.error(e);
+      
+        if (e instanceof Response) {
+          try {
+            const json = await e.json();
+            if (json.errors) {
+              setErr(json.errors.join(', '));
+            } else {
+              setErr('Wystąpił błąd: ' + e.status);
+            }
+          } catch {
+            setErr('Nieprawidłowa odpowiedź z serwera.');
+          }
+        } else {
+          setErr('Wystąpił nieoczekiwany błąd.');
+        }
+      
+        setHistory([]);
       } finally {
         setLoading(false);
       }

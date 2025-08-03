@@ -2,7 +2,7 @@
 
 namespace App\Dto;
 
-class ExchangeRateDto
+readonly class ExchangeRateDto
 {
     public function __construct(
         public string $code,
