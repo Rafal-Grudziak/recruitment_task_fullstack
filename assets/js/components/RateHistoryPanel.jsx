@@ -14,7 +14,6 @@ export default function RateHistoryPanel({ code, date, onDateChange, onClose }) 
         const data = await getHistory(code, date);
         setHistory(data);
       } catch (e) {
-        console.error(e);
       
         if (e instanceof Response) {
           try {
