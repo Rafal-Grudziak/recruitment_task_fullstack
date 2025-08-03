@@ -6,7 +6,9 @@ class ExchangeRateHistoryDto
 {
     public function __construct(
         public string $date,
-        public float $mid
+        public float $mid,
+        public ?float $buy = null,
+        public ?float $sell = null
     ) {}
 
     public function toArray(): array
@@ -14,6 +16,8 @@ class ExchangeRateHistoryDto
         return [
             'date' => $this->date,
             'mid' => $this->mid,
+            'buy' => $this->buy,
+            'sell' => $this->sell,
         ];
     }
 } 

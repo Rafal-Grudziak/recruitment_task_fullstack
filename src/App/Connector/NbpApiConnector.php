@@ -82,6 +82,14 @@ class NbpApiConnector implements NbpApiConnectorInterface
                 return [];
             }
 
+            if (isset($data['rates']) && !is_array($data['rates'])) {
+                $this->logger->error('Invalid format: "rates" is not an array', [
+                    'url' => $url,
+                    'body' => $body,
+                ]);
+                return [];
+            }
+
             return $data;
         } catch (RequestException $e) {
             $this->logger->error('HTTP request error to NBP API', [

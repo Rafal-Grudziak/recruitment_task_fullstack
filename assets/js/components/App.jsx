@@ -1,6 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { getTodayRates } from '../api/rates';
-import { decorateRate } from '../utils/rates';
 import RateHistoryPanel from './RateHistoryPanel';
 import RatesTable from './RatesTable';
 
@@ -33,10 +32,6 @@ export default function App() {
     })();
   }, []);
 
-  const decoratedRates = useMemo(() => {
-    return rates.map((r) => ({ ...r, ...decorateRate(r.code, r.mid) }));
-  }, [rates]);
-
   return (
     <div className="container py-4">
       <h1 className="mb-4">Kursy walut – kantor</h1>
@@ -45,7 +40,7 @@ export default function App() {
       {err && <div className="alert alert-danger">Błąd: {err}</div>}
 
       {!loading && !err && (
-        <RatesTable rates={decoratedRates} onSelectCode={setSelectedCode} />
+        <RatesTable rates={rates} onSelectCode={setSelectedCode} />
       )}
 
       {selectedCode && (

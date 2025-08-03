@@ -10,7 +10,7 @@ class ExchangeRateHistoryResourceTest extends TestCase
 {
     public function testToArrayReturnsCorrectStructure(): void
     {
-        $dto = new ExchangeRateHistoryDto('2025-07-31', 4.5678);
+        $dto = new ExchangeRateHistoryDto('2025-07-31', 4.5678, null, null);
         $resource = new ExchangeRateHistoryResource($dto);
 
         $result = $resource->toArray();
@@ -18,23 +18,35 @@ class ExchangeRateHistoryResourceTest extends TestCase
         $this->assertIsArray($result);
         $this->assertEquals([
             'date' => '2025-07-31',
-            'mid' => 4.57, // zakładamy, że NumberHelper::round2() zaokrągla
+            'mid' => 4.57,
+            'buy' => null,
+            'sell' => null,
         ], $result);
     }
 
     public function testCollectionTransformsArrayOfDtos(): void
     {
         $dtos = [
-            new ExchangeRateHistoryDto('2025-07-31', 4.5678),
-            new ExchangeRateHistoryDto('2025-07-30', 4.4321),
+            new ExchangeRateHistoryDto('2025-07-31', 4.5678, 4.50, 4.60),
+            new ExchangeRateHistoryDto('2025-07-30', 4.4321, null, 4.55),
         ];
 
         $result = ExchangeRateHistoryResource::collection($dtos);
 
         $this->assertCount(2, $result);
-        $this->assertEquals('2025-07-31', $result[0]['date']);
-        $this->assertEquals(4.57, $result[0]['mid']);
-        $this->assertEquals('2025-07-30', $result[1]['date']);
-        $this->assertEquals(4.43, $result[1]['mid']);
+
+        $this->assertEquals([
+            'date' => '2025-07-31',
+            'mid' => 4.57,
+            'buy' => 4.50,
+            'sell' => 4.60,
+        ], $result[0]);
+
+        $this->assertEquals([
+            'date' => '2025-07-30',
+            'mid' => 4.43,
+            'buy' => null,
+            'sell' => 4.55,
+        ], $result[1]);
     }
 }

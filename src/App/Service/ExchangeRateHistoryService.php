@@ -4,6 +4,7 @@ namespace App\Service;
 
 use App\Connector\NbpApiConnectorInterface;
 use App\Dto\ExchangeRateHistoryDto;
+use App\Parser\RateParser;
 use Symfony\Component\DependencyInjection\ParameterBag\ParameterBagInterface;
 
 class ExchangeRateHistoryService
@@ -12,6 +13,7 @@ class ExchangeRateHistoryService
 
     public function __construct(
         private NbpApiConnectorInterface $connector,
+        private RateParser $rateParser,
         ParameterBagInterface $parameterBag
     ) {
         $this->allowedCurrencies = $parameterBag->get('exchange_rate.allowed_currencies');
@@ -24,25 +26,15 @@ class ExchangeRateHistoryService
      */
     public function getHistoricalRates(string $code, ?\DateTimeInterface $endDate = null): array
     {
-        // Check if currency code is allowed
         if (!in_array($code, $this->allowedCurrencies)) {
             throw new \InvalidArgumentException("Currency code '$code' is not allowed.");
         }
 
         $data = $this->connector->getHistoricalRates($code, $endDate);
 
-        $result = [];
-        
-        // Check if response is valid and format data
-        if (isset($data['rates']) && is_array($data['rates'])) {
-            foreach ($data['rates'] as $rate) {
-                $result[] = new ExchangeRateHistoryDto(
-                    $rate['effectiveDate'],
-                    $rate['mid']
-                );
-            }
-        }
+        $rawRates = is_array($data['rates'] ?? null) ? $data['rates'] : [];
 
-        return $result;
+        return $this->rateParser->parseHistoricalRates($rawRates, $code);
     }
+
 } 

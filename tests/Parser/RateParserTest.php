@@ -220,4 +220,39 @@ class RateParserTest extends TestCase
         $this->assertNotContains('CAD', $codes);
         $this->assertNotContains('AUD', $codes);
     }
+
+    public function testParseHistoricalRatesReturnsValidDtos(): void
+    {
+        $rates = [
+            ['mid' => 4.2500, 'effectiveDate' => '2025-07-20'],
+            ['mid' => 4.3000, 'effectiveDate' => '2025-07-21'],
+        ];
+
+        $result = $this->parser->parseHistoricalRates($rates, 'USD');
+
+        $this->assertCount(2, $result);
+        $this->assertEquals('2025-07-20', $result[0]->date);
+        $this->assertEqualsWithDelta(4.25, $result[0]->mid, 0.0001);
+        $this->assertEqualsWithDelta(4.23, $result[0]->buy, 0.0001);
+        $this->assertEqualsWithDelta(4.28, $result[0]->sell, 0.0001);
+    }
+
+    public function testParseHistoricalRatesSkipsDisallowedCurrency(): void
+    {
+        $rates = [
+            ['mid' => 4.0000, 'effectiveDate' => '2025-07-15']
+        ];
+
+        $result = $this->parser->parseHistoricalRates($rates, 'JPY'); // not supported
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
+    public function testParseHistoricalRatesHandlesEmptyInput(): void
+    {
+        $result = $this->parser->parseHistoricalRates([], 'USD');
+        $this->assertIsArray($result);
+        $this->assertEmpty($result);
+    }
+
 }

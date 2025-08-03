@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { getHistory } from '../api/rates';
-import { decorateRate, round2 } from '../utils/rates';
 
 export default function RateHistoryPanel({ code, date, onDateChange, onClose }) {
   const [history, setHistory] = useState([]);
@@ -64,17 +63,14 @@ export default function RateHistoryPanel({ code, date, onDateChange, onClose }) 
                 </tr>
               </thead>
               <tbody>
-                {history.map((h) => {
-                  const d = decorateRate(code, h.mid);
-                  return (
-                    <tr key={h.date}>
-                      <td>{h.date}</td>
-                      <td>{round2(h.mid)}</td>
-                      <td>{d.buy ?? '—'}</td>
-                      <td>{d.sell}</td>
-                    </tr>
-                  );
-                })}
+                {history.map((h) => (
+                  <tr key={h.date}>
+                    <td>{h.date}</td>
+                    <td>{h.mid}</td>
+                    <td>{h.buy ?? '—'}</td>
+                    <td>{h.sell}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>

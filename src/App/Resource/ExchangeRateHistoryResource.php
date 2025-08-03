@@ -20,6 +20,8 @@ class ExchangeRateHistoryResource extends AbstractResource
         return [
             'date' => $dto->date,
             'mid' => NumberHelper::round2($dto->mid),
+            'buy' => $dto->buy !== null ? NumberHelper::round2($dto->buy) : null,
+            'sell' => $dto->sell !== null ? NumberHelper::round2($dto->sell) : null,
         ];
     }
 } 

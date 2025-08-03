@@ -18,14 +18,19 @@ class ExchangeRateHistoryServiceTest extends TestCase
     protected function setUp(): void
     {
         $this->connector = $this->createMock(NbpApiConnectorInterface::class);
+        $this->rateParser = $this->createMock(\App\Parser\RateParser::class);
         $this->parameterBag = $this->createMock(ParameterBagInterface::class);
 
-        $this->parameterBag->method('get')->with('exchange_rate.allowed_currencies')->willReturn(['USD', 'EUR', 'GBP', 'CHF']);
+        $this->parameterBag->method('get')
+            ->with('exchange_rate.allowed_currencies')
+            ->willReturn(['USD', 'EUR', 'GBP', 'CHF']);
 
         $this->service = new ExchangeRateHistoryService(
             $this->connector,
+            $this->rateParser,
             $this->parameterBag
         );
+
     }
 
     public function testGetHistoricalRatesReturnsValidData(): void
@@ -44,13 +49,23 @@ class ExchangeRateHistoryServiceTest extends TestCase
             ->with('USD', null)
             ->willReturn($mockData);
 
+        $this->rateParser
+            ->expects($this->once())
+            ->method('parseHistoricalRates')
+            ->with($mockData['rates'], 'USD')
+            ->willReturn([
+                new ExchangeRateHistoryDto('2025-01-15', 4.25, null, 4.35),
+                new ExchangeRateHistoryDto('2025-01-16', 4.26, null, 4.36),
+                new ExchangeRateHistoryDto('2025-01-17', 4.24, null, 4.34),
+            ]);
+
         $result = $this->service->getHistoricalRates('USD');
 
         $this->assertIsArray($result);
         $this->assertCount(3, $result);
         $this->assertInstanceOf(ExchangeRateHistoryDto::class, $result[0]);
         $this->assertEquals('2025-01-15', $result[0]->date);
-        $this->assertEquals(4.2500, $result[0]->mid);
+        $this->assertEquals(4.25, $result[0]->mid);
     }
 
     public function testGetHistoricalRatesWithCustomDate(): void
@@ -68,12 +83,21 @@ class ExchangeRateHistoryServiceTest extends TestCase
             ->with('EUR', $customDate)
             ->willReturn($mockData);
 
+        $this->rateParser
+            ->expects($this->once())
+            ->method('parseHistoricalRates')
+            ->with($mockData['rates'], 'EUR')
+            ->willReturn([
+                new ExchangeRateHistoryDto('2025-01-20', 4.5, null, 4.6),
+            ]);
+
         $result = $this->service->getHistoricalRates('EUR', $customDate);
 
         $this->assertCount(1, $result);
         $this->assertEquals('2025-01-20', $result[0]->date);
         $this->assertEquals(4.5000, $result[0]->mid);
     }
+
 
     public function testGetHistoricalRatesThrowsExceptionForInvalidCurrency(): void
     {
@@ -144,8 +168,8 @@ class ExchangeRateHistoryServiceTest extends TestCase
     public function testConstructorInitializesAllowedCurrencies(): void
     {
         $customCurrencies = ['PLN', 'USD', 'EUR'];
-        $parameterBag = $this->createMock(ParameterBagInterface::class);
         
+        $parameterBag = $this->createMock(ParameterBagInterface::class);
         $parameterBag
             ->expects($this->once())
             ->method('get')
@@ -153,12 +177,14 @@ class ExchangeRateHistoryServiceTest extends TestCase
             ->willReturn($customCurrencies);
 
         $connector = $this->createMock(NbpApiConnectorInterface::class);
+        $rateParser = $this->createMock(\App\Parser\RateParser::class); // <- DODAJ TO
 
-        $service = new ExchangeRateHistoryService($connector, $parameterBag);
+        $service = new ExchangeRateHistoryService($connector, $rateParser, $parameterBag);
 
         $this->expectException(\InvalidArgumentException::class);
         $service->getHistoricalRates('JPY');
     }
+
 
     public function testAllowedCurrenciesValidation(): void
     {
@@ -190,12 +216,21 @@ class ExchangeRateHistoryServiceTest extends TestCase
             ->with('GBP', $dateTime)
             ->willReturn($mockData);
 
+        $this->rateParser
+            ->expects($this->once())
+            ->method('parseHistoricalRates')
+            ->with($mockData['rates'], 'GBP')
+            ->willReturn([
+                new ExchangeRateHistoryDto('2025-01-25', 0.85, null, 0.95),
+            ]);
+
         $result = $this->service->getHistoricalRates('GBP', $dateTime);
 
         $this->assertCount(1, $result);
         $this->assertEquals('2025-01-25', $result[0]->date);
         $this->assertEquals(0.8500, $result[0]->mid);
     }
+
 
     public function testGetHistoricalRatesCreatesCorrectDtoObjects(): void
     {
@@ -207,23 +242,33 @@ class ExchangeRateHistoryServiceTest extends TestCase
             ]
         ];
 
-        $this->connector->method('getHistoricalRates')->willReturn($mockData);
+        $this->connector
+            ->method('getHistoricalRates')
+            ->with('EUR', null)
+            ->willReturn($mockData);
+
+        $this->rateParser
+            ->expects($this->once())
+            ->method('parseHistoricalRates')
+            ->with($mockData['rates'], 'EUR')
+            ->willReturn([
+                new ExchangeRateHistoryDto('2025-01-01', 1.1, null, 1.2),
+                new ExchangeRateHistoryDto('2025-01-02', 1.11, null, 1.21),
+                new ExchangeRateHistoryDto('2025-01-03', 1.09, null, 1.19),
+            ]);
 
         $result = $this->service->getHistoricalRates('EUR');
 
         $this->assertCount(3, $result);
-        
         $this->assertInstanceOf(ExchangeRateHistoryDto::class, $result[0]);
-        $this->assertInstanceOf(ExchangeRateHistoryDto::class, $result[1]);
-        $this->assertInstanceOf(ExchangeRateHistoryDto::class, $result[2]);
-
         $this->assertEquals('2025-01-01', $result[0]->date);
-        $this->assertEquals(1.1000, $result[0]->mid);
-        
+        $this->assertEquals(1.1, $result[0]->mid);
+
         $this->assertEquals('2025-01-02', $result[1]->date);
-        $this->assertEquals(1.1100, $result[1]->mid);
-        
+        $this->assertEquals(1.11, $result[1]->mid);
+
         $this->assertEquals('2025-01-03', $result[2]->date);
-        $this->assertEquals(1.0900, $result[2]->mid);
+        $this->assertEquals(1.09, $result[2]->mid);
     }
+
 }

@@ -1,5 +1,4 @@
 import React from 'react';
-import { round2 } from '../utils/rates';
 
 export default function RatesTable({ rates, onSelectCode }) {
   return (
@@ -20,7 +19,7 @@ export default function RatesTable({ rates, onSelectCode }) {
             <tr key={r.code}>
               <td><strong>{r.code}</strong></td>
               <td>{r.currency}</td>
-              <td>{round2(r.mid)}</td>
+              <td>{r.mid}</td>
               <td>{r.buy ?? '—'}</td>
               <td>{r.sell}</td>
               <td>
