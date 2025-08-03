@@ -27,8 +27,7 @@ class ExchangeRateServiceTest extends TestCase
         $this->parameterBag = $this->createMock(ParameterBagInterface::class);
 
         $this->parameterBag->method('get')->willReturnMap([
-            ['exchange_rate.cache.key', 'exchange_rates_toda_'],
-            ['exchange_rate.cache.ttl', 3600],
+            ['exchange_rate.cache.key_prefix', 'exchange_rates_'],
         ]);
 
         $this->exchangeRateService = new ExchangeRateService(
@@ -62,11 +61,10 @@ class ExchangeRateServiceTest extends TestCase
     {
         $parameterBag = $this->createMock(ParameterBagInterface::class);
         $parameterBag->method('get')->willReturnMap([
-            ['exchange_rate.cache.key', 'exchange_rates_toda_'],
-            ['exchange_rate.cache.ttl', 7200],
+            ['exchange_rate.cache.key_prefix', 'exchange_rates_'],
         ]);
 
-        $expectedKey = $this->generateExpectedCacheKey('exchange_rates_toda_');
+        $expectedKey = $this->generateExpectedCacheKey('exchange_rates_');
 
         $cache = $this->createMock(CacheInterface::class);
         $cache->method('get')->with($expectedKey)->willReturn([]);
@@ -141,7 +139,7 @@ class ExchangeRateServiceTest extends TestCase
         $this->assertEmpty($result);
     }
 
-    private function generateExpectedCacheKey(string $prefix = 'exchange_rates_toda_'): string
+    private function generateExpectedCacheKey(string $prefix = 'exchange_rates_'): string
     {
         $now = new \DateTimeImmutable('now', new \DateTimeZone('Europe/Warsaw'));
         $hour = (int) $now->format('H');

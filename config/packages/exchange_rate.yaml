@@ -13,4 +13,4 @@ parameters:
   exchange_rate.other_sell_spread: 0.2
   
   # Cache configuration
-  exchange_rate.cache.key: 'exchange_rates_toda_' 
+  exchange_rate.cache.key_prefix: 'exchange_rates_' 
