@@ -1,0 +1,16 @@
+parameters:
+  # NBP API URLs
+  nbp.api.base_url: 'https://api.nbp.pl/api/exchangerates'
+  nbp.api.table_a_url: 'https://api.nbp.pl/api/exchangerates/tables/A/?format=json'
+  nbp.api.rates_url_template: 'https://api.nbp.pl/api/exchangerates/rates/A/{code}/{startDate}/{endDate}/?format=json'
+  
+  # Allowed currencies
+  exchange_rate.allowed_currencies: ['EUR', 'USD', 'CZK', 'IDR', 'BRL']
+  
+  # Spread values for buy/sell calculations
+  exchange_rate.eur_usd_buy_spread: 0.15
+  exchange_rate.eur_usd_sell_spread: 0.11
+  exchange_rate.other_sell_spread: 0.2
+  
+  # Cache configuration
+  exchange_rate.cache.key_prefix: 'exchange_rates_' 
